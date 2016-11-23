@@ -1,0 +1,37 @@
+{
+  "name": "gallu",
+  "version": "1.0.0",
+  "description": "Yet another node genetic algorithm",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "xo"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/scagood/gallu.git"
+  },
+  "author": "scagood",
+  "license": "MIT",
+  "devDependencies": {
+    "xo": "^0.17.1"
+  },
+  "xo": {
+    "space": 4,
+    "ignore": [],
+    "rules": {
+      "max-params": [
+        1,
+        6
+      ],
+      "complexity": 0
+    }
+  },
+  "bugs": {
+    "url": "https://github.com/scagood/gallu/issues"
+  },
+  "homepage": "https://github.com/scagood/gallu#readme",
+  "private": true,
+  "dependencies": {
+    "belt.js": "0.3.1"
+  }
+}
