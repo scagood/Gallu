@@ -1,6 +1,7 @@
 var belt = require('belt.js');
 var crossover = require('./crossover');
 
+// This is the data structure that will be used for each gene sequence
 var Person = function (seed, bounds) {
     var a = 0;
 
@@ -25,10 +26,12 @@ var Person = function (seed, bounds) {
     }
 };
 
+// The GA 'class'
 var GA = function (poolSize, geneLength, seeds) {
     var population = [];
     var k = 0;
 
+    // The default 'bounds' functions
     var bounds = {
         getMin: function () {
             return 0;
@@ -55,7 +58,9 @@ var GA = function (poolSize, geneLength, seeds) {
             total += population[a].fitness;
             a++;
         }
-        return total;
+
+        // Return the average fitness
+        return total / population.length;
     };
 
     // Crossover
@@ -70,6 +75,7 @@ var GA = function (poolSize, geneLength, seeds) {
         var numberToCrossover;
         var genes = [];
 
+        // Ensure all inputs are filled if not provided
         crossoverProb = belt.compare.isDefined(crossoverProb) ? crossoverProb : {};
         minNum = belt.compare.isDefined(minNum) ? minNum : 2;
         maxNum = belt.compare.isDefined(maxNum) ? maxNum : 2;
@@ -102,6 +108,7 @@ var GA = function (poolSize, geneLength, seeds) {
             }
 
             crossoverPoint = [];
+            // Generate the crossover points
             for (a = 0; a < crossoverProb.count; a++) {
                 crossoverPoint[a] = Math.random();
                 crossoverPoint[a] = belt.maths.probMap(crossoverPoint[a], crossoverProb.low, crossoverProb.high, crossoverProb.prob);
@@ -110,19 +117,20 @@ var GA = function (poolSize, geneLength, seeds) {
                 crossoverPoint[a] *= crossoverProb.ruleLength;
             }
 
-            // Do the thing!
+            // Do the crossover
             genes = crossover(genes, crossoverPoint, shuffleFunc);
 
+            // Add the crossed over people to the new population
             newPopulation = newPopulation.concat(genes);
         }
 
+        // Make the crossed over children into people.
         for (a = 0; a < newPopulation.length; a++) {
             newPopulation[a] = new Person(newPopulation[a]);
         }
 
+        // Overwrite the old population.
         population = newPopulation;
-
-        return;
     };
 
     // Mutation
@@ -135,6 +143,7 @@ var GA = function (poolSize, geneLength, seeds) {
         var newPopulation = [];
         var newRule = [];
 
+        // Ensure all inputs are filled if not provided
         prob = belt.compare.isNumber(prob) ? prob : (1 / geneLength);
         wildcard = belt.compare.isDefined(wildcard) ? wildcard : '#';
         wildprob = belt.compare.isNumber(wildprob) ? wildprob : 0;
@@ -145,7 +154,9 @@ var GA = function (poolSize, geneLength, seeds) {
 
         // For every person
         while (a < population.length) {
+            // Remove a person from the old population
             current = oldPopulation.pop();
+            // Extract the data from them.
             current = current.data;
 
             // Mutate Length
@@ -154,6 +165,7 @@ var GA = function (poolSize, geneLength, seeds) {
                 if (Math.random() < lenMutateWeight) {
                     // Additive
                     newRule = [];
+                    // Generate the new rule.
                     while (b < lenOfLenMutate) {
                         // Generate a random number (between the given bounds) and round it correctly to precision
                         ruleGene = belt.generator.random(bounds.getMin(b + current.length), bounds.getMax(b + current.length));
@@ -162,37 +174,38 @@ var GA = function (poolSize, geneLength, seeds) {
                         newRule[b] = ruleGene;
                         b++;
                     }
+                    // Add the rule into the current person, ensuring the data structure isn't broken
                     current.splice.apply(current, [belt.generator.randomInt(0, current.length / lenOfLenMutate) * lenOfLenMutate, 0].concat(newRule));
                 } else if (lenOfLenMutate !== 0) {
                     // Subtractive
+                    // Remove a rule from the current person, ensuring the data structure isn't broken
                     current.splice(belt.generator.randomInt(0, current.length / lenOfLenMutate) * lenOfLenMutate, lenOfLenMutate);
                 }
             }
 
-            // For each gene
             b = 0;
+            // For each gene
             while (b < current.length) {
                 // If this should be mutated
                 if (prob > Math.random()) {
                     // If mutate to wildcard
                     if (current[b] !== wildcard && wildprob > Math.random() && bounds.getCanWildcard(b) === 1) {
+                        // Go to wildcard
                         current[b] = wildcard;
                     } else {
                         // Do the mutation
                         current[b] = belt.generator.random(bounds.getMin(b), bounds.getMax(b));
-
                         // Round to correct precision
                         current[b] = belt.maths.roundDP(current[b], bounds.getDP(b));
                     }
                 }
                 b++;
             }
-
+            // Add the mutated person to the new population
             newPopulation.push(new Person(current));
-
             a++;
         }
-
+        // Overwrite the old population with the new population
         population = newPopulation;
     };
 
@@ -212,9 +225,11 @@ var GA = function (poolSize, geneLength, seeds) {
             a = size;
             people = [];
             while (a--) {
+                // Select 'size' random people from the population
                 people.push(population[belt.generator.randomInt(population.length - 1, 0)]);
             }
 
+            // Find the 'fitest' aka best person(s)
             best = people[0];
             for (a = 0; a < people.length; a++) {
                 current = people[a];
@@ -223,6 +238,7 @@ var GA = function (poolSize, geneLength, seeds) {
                 }
             }
 
+            // Find all the 'fitest' people and select them
             for (a = 0; a < people.length; a++) {
                 if (best.fitness !== people[a].fitness) {
                     people.splice(a, 1);
@@ -230,6 +246,7 @@ var GA = function (poolSize, geneLength, seeds) {
             }
 
             best = people[0];
+            // Find the smallest and 'fitest' person and select them
             for (a = 0; a < people.length; a++) {
                 current = people[a];
                 if (current.data.length < best.data.length) {
@@ -237,9 +254,11 @@ var GA = function (poolSize, geneLength, seeds) {
                 }
             }
 
+            // Add the best person to the new population
             newPopulation.push(best);
         }
 
+        // Overwrite the old population with the new one.
         population = newPopulation;
     };
 
@@ -247,24 +266,29 @@ var GA = function (poolSize, geneLength, seeds) {
         var s = population[0];
         var a;
 
+        // Find all the 'fitest' people and select them
         for (a = 0; a < population.length; a++) {
             if (s.fitness < population[a].fitness) {
                 s = population[a];
             }
         }
 
+        // Find the smallest and 'fitest' person and select them
         for (a = 0; a < population.length; a++) {
             if (s.data.length > population[a].data.length && s.fitness === population[a].fitness) {
                 s = population[a];
             }
         }
 
+        // Return the best person.
         return s;
     };
     this.getWorst = function (c) {
         var s = population[0];
         var t = 0;
         var a = 0;
+
+        // Find the least 'fit' person
         while (a < population.length) {
             if (population[a].fitness < s.fitness) {
                 s = population[a];
@@ -276,12 +300,14 @@ var GA = function (poolSize, geneLength, seeds) {
     };
 
     this.setWorst = function (person) {
+        // Overwrite the lest 'fit' person with the previous 'fitest'
         population[this.getWorst(true)] = person;
     };
 
     this.getTotalFitness = function () {
         var s = 0;
         var a = 0;
+        // Add all the fitnesses together.
         while (a < population.length) {
             s += population[a].fitness;
             a++;
@@ -289,20 +315,24 @@ var GA = function (poolSize, geneLength, seeds) {
         return s;
     };
     this.getAverageFitness = function () {
+        // Divide the total fitness by the number of people.
         return this.getTotalFitness() / poolSize;
     };
 
     this.getAverageLength = function () {
         var s = 0;
         var a = 0;
+        // Add all the lengths together
         while (a < population.length) {
             s += population[a].data.length;
             a++;
         }
+        // Divide by the number of people.
         return s / population.length;
     };
 
     this.getPopulation = function () {
+        // Return an unassociated population
         return population.slice(0);
     };
 
