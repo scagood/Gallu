@@ -1,15 +1,15 @@
 var GA = require('../');
 
 // Import the training dataset
-var data = GA.parse('data/data3-train.txt', '([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) (0|1)', [1, 1, 1, 1, 1, 1, 0]);
+var dataFull = GA.parse('data/data3.txt', '([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) (0|1)', [1, 1, 1, 1, 1, 1, 0]);
 
 // Import the full dataset
-var dataFull = GA.parse('data/data3.txt', '([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) (0|1)', [1, 1, 1, 1, 1, 1, 0]);
+var data = dataFull.slice(0, 1000);
 
 // GA's core variables
 var inputLength = 6;
 var outputLength = 1;
-var initaialRules = 10;
+var initaialRules = 6;
 var poolSize = 100;
 var geneCount = initaialRules * ((2 * inputLength) + outputLength);
 
