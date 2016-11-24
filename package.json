@@ -12,9 +12,7 @@
   },
   "author": "scagood",
   "license": "MIT",
-  "devDependencies": {
-    "xo": "^0.17.1"
-  },
+  "devDependencies": {},
   "xo": {
     "space": 4,
     "ignore": [],
@@ -30,7 +28,6 @@
     "url": "https://github.com/scagood/gallu/issues"
   },
   "homepage": "https://github.com/scagood/gallu#readme",
-  "private": true,
   "dependencies": {
     "belt.js": "0.3.1"
   }

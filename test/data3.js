@@ -44,6 +44,10 @@ while (i) {
 
     temp = carry.data.slice(0);
     temp = GA.build(temp, inputLength, outputLength, true);
+    
+    if (i % 100 === 0) {
+        console.log(JSON.stringify(carry));
+    }
 
     console.log(
         i + ' ' +

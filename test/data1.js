@@ -38,6 +38,10 @@ while (i) {
     ga.setWorst(carry);
     carry = ga.getBest();
 
+    if (i % 100 === 0) {
+        console.log(JSON.stringify(carry));
+    }
+
     console.log(
         i + ' ' +
         ga.getAverageFitness().toFixed(2) + ' ' +
