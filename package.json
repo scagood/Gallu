@@ -1,6 +1,6 @@
 {
   "name": "gallu",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Yet another node genetic algorithm",
   "main": "src/index.js",
   "scripts": {
@@ -12,7 +12,9 @@
   },
   "author": "scagood",
   "license": "MIT",
-  "devDependencies": {},
+  "devDependencies": {
+    "webpack": "^1.13.3"
+  },
   "xo": {
     "space": 4,
     "ignore": [],

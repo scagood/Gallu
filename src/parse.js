@@ -1,61 +1,65 @@
-function buildData(data, format, structure) {
+var parse = function (data, format, structure) {
     var a;
-    var b;
-    var c;
+    var result;
     var current;
-    format = new RegExp(format);
+    var results = [];
+    format = new RegExp(format, 'g');
 
-    for (a = 0; a < data.length; a++) {
-        current = format.exec(data[a].trim());
-
-        c = {input: [], output: []};
-        for (b = 0; b < structure.length; b++) {
-            if (typeof structure[b] === 'number') {
-                if (structure[b] === 1 || structure[b] === true) {
-                    c.input.push(parseFloat(current[b + 1]));
-                } else {
-                    c.output.push(parseFloat(current[b + 1]));
-                }
-            } else {
-                throw new Error('Structure and Format incompatible');
+    for (a = 0; a < structure.length; a++) {
+        if (typeof structure[a] === 'string') {
+            current = structure[a].split('-');
+            structure[a] = {};
+            switch (current[0].toLowerCase()) {
+                case 'in':
+                case 'input':
+                    structure[a].group = 'input';
+                    break;
+                case 'out':
+                case 'output':
+                    structure[a].group = 'output';
+                    break;
+            }
+            switch (current[1].toLowerCase()) {
+                case 'int':
+                case 'integer':
+                    structure[a].type = 'int';
+                    break;
+                case 'float':
+                    structure[a].type = 'float';
+                    break;
             }
         }
-
-        data[a] = c;
     }
-
-    return data;
-}
-var parseDataFile = function (path, format, structure) {
-    var a;
-
-    // Read file
-    var data = require('fs').readFileSync(path).toString();
-
-    // Remove line feed
-    data = data.replace(/\r/g, '');
-
-    // Split into lines
-    data = data.split('\n');
-
-    // Remove empty lines
-    for (a = 0; a < data.length; a++) {
-        if (data[a] === '') {
-            data.splice(a, 1);
-            a--;
+    
+    // Match all occurences of 'format'
+    while (result = format.exec(data)) {
+        current = {};
+        current.data = result.slice(1, structure.length + 1);
+        current.compile = {};
+        
+        // Convert raw 'match' into 'structure'
+        for (a = 0; a < current.data.length; a++) {
+            // Create the groups in not defined
+            if (typeof current.compile[structure[a].group] === 'undefined') {
+                current.compile[structure[a].group] = [];
+            }
+            
+            // Convert the 'string' to the correct data 'type'
+            switch (structure[a].type) {
+                case 'int':
+                case 'float':
+                    current.data[a] = parseFloat(current.data[a]);
+                    break;
+                default:
+                    throw new Error('Unknown or Unimplimented data type');
+                    break;
+            }
+            current.compile[structure[a].group].push(current.data[a]);
         }
+        results.push(current.compile);
     }
 
-    // Remove the data descriptors
-    data.shift();
-
-    try {
-        data = buildData(data, format, structure);
-    } catch (err) {
-        data = false;
-    }
-
-    return data;
+    return results;
 };
 
-module.exports = parseDataFile;
+module.exports = parse;

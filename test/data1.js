@@ -1,7 +1,9 @@
+var fs = require('fs');
 var GA = require('../');
 
 // Import the dataset
-var data = GA.parse('data/data1.txt', '(0|1)(0|1)(0|1)(0|1)(0|1) (0|1)', [1, 1, 1, 1, 1, 0]);
+var data = fs.readFileSync('data/data1.txt').toString();
+data = GA.parse(data, '(0|1)(0|1)(0|1)(0|1)(0|1) (0|1)', ['In-Int', 'In-Int', 'In-Int', 'In-Int', 'In-Int', 'Out-Int']);
 
 // Core GA variables
 var inputLength = 5;

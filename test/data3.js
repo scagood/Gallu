@@ -1,7 +1,18 @@
+var fs = require('fs');
 var GA = require('../');
 
+var In = {
+    type: 'float',
+    group: 'input'
+};
+var Out = {
+    type: 'int',
+    group: 'output'
+};
+
 // Import the training dataset
-var dataFull = GA.parse('data/data3.txt', '([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) (0|1)', [1, 1, 1, 1, 1, 1, 0]);
+var dataFull = fs.readFileSync('data/data3.txt').toString();
+dataFull = GA.parse(dataFull, '([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) (0|1)', [In, In, In, In, In, In, Out]);
 
 // Import the full dataset
 var data = dataFull.slice(0, 1000);
@@ -44,7 +55,7 @@ while (i) {
 
     temp = carry.data.slice(0);
     temp = GA.build(temp, inputLength, outputLength, true);
-    
+
     if (i % 100 === 0) {
         console.log(JSON.stringify(carry));
     }

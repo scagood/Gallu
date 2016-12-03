@@ -1,7 +1,18 @@
+var fs = require('fs');
 var GA = require('../');
 
+var In = {
+    type: 'float',
+    group: 'input'
+};
+var Out = {
+    type: 'int',
+    group: 'output'
+};
+
 // Import the dataset
-var data = GA.parse('data/data2.txt', '(0|1)(0|1)(0|1)(0|1)(0|1)(0|1) (0|1)', [1, 1, 1, 1, 1, 1, 0]);
+var data = fs.readFileSync('data/data2.txt').toString();
+data = GA.parse(data, '(0|1)(0|1)(0|1)(0|1)(0|1)(0|1) (0|1)', [In, In, In, In, In, In, Out]);
 
 // Core GA variables
 var inputLength = 6;
@@ -41,7 +52,7 @@ while (i) {
     if (i % 100 === 0) {
         console.log(JSON.stringify(carry));
     }
-    
+
     console.log(
         i + ' ' +
         ga.getAverageFitness().toFixed(2) + ' ' +
