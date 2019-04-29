@@ -1,74 +1,84 @@
-function inputMatchInt(data, rule, wildcard) {
-    var matching = true;
-    var a;
-
-    wildcard = typeof wildcard === 'undefined' ? '#' : wildcard;
-
-    for (a = 0; a < data.length; a++) {
-        if (rule[a] !== wildcard && data[a] !== rule[a]) {
-            matching = false;
-            break;
+function outputMatch(data, rule) {
+    for (let a = 0; a < data.length; a++) {
+        if (data[a] !== rule[a]) {
+            return 0;
         }
     }
 
-    return matching;
+    return 1;
 }
-function inputMatchFloat(data, rule, wildcard) {
-    var matching = true;
-    var a;
 
-    wildcard = typeof wildcard === 'undefined' ? '#' : wildcard;
+const defaultCard = '#';
 
-    for (a = 0; a < data.length; a++) {
+function inputMatchInt(data, rule, wildcard = defaultCard) {
+    for (let a = 0; a < data.length; a++) {
+        if (rule[a] !== wildcard && data[a] !== rule[a]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+function checkIntPoint(data, rules, wildcard = defaultCard) {
+    // Check current against rules
+    for (let a = 0; a < rules.length; a++) {
+        if (inputMatchInt(data.input, rules[a].input, wildcard)) {
+            return outputMatch(data.output, rules[a].output);
+        }
+    }
+
+    return 0;
+}
+function checkIntSet(data, rules, wildcard = defaultCard) {
+    let fitness = 0;
+
+    // For every data point
+    for (let a = 0; a < data.length; a++) {
+        fitness += checkIntPoint(data[a], rules, wildcard);
+    }
+
+    return fitness;
+}
+
+function inputMatchFloat(data, rule, wildcard = defaultCard) {
+    for (let a = 0; a < data.length; a++) {
         if (
             !(rule[a][0] < data[a] && data[a] < rule[a][1]) &&
             !(rule[a][0] === wildcard || rule[a][1] === wildcard)
         ) {
-            matching = false;
-            break;
+            return false;
         }
     }
 
-    return matching;
+    return true;
 }
-function outputMatch(data, rule) {
-    var matching = 1;
-    var a;
-
-    for (a = 0; a < data.length; a++) {
-        if (data[a] !== rule[a]) {
-            matching = 0;
-            break;
-        }
-    }
-
-    return matching;
-}
-function checkDataPoint(data, rules, wildcard, isFloat) {
-    var a;
-    isFloat = typeof isFloat === 'undefined' ? false : isFloat;
-
+function checkFloatPoint(data, rules, wildcard = defaultCard) {
     // Check current against rules
-    for (a = 0; a < rules.length; a++) {
-        if (
-            (isFloat === false && inputMatchInt(data.input, rules[a].input, wildcard)) ||
-            (isFloat === true && inputMatchFloat(data.input, rules[a].input, wildcard))
-        ) {
+    for (let a = 0; a < rules.length; a++) {
+        if (inputMatchFloat(data.input, rules[a].input, wildcard)) {
             return outputMatch(data.output, rules[a].output);
         }
     }
+
     return 0;
 }
-var checkDataSet = function (data, rules, wildcard, isFloat) {
-    var a;
-    var fitness = 0;
+function checkFloatSet(data, rules, wildcard = defaultCard) {
+    let fitness = 0;
 
     // For every data point
-    for (a = 0; a < data.length; a++) {
-        fitness += checkDataPoint(data[a], rules, wildcard, isFloat);
+    for (let a = 0; a < data.length; a++) {
+        fitness += checkFloatPoint(data[a], rules, wildcard);
     }
 
     return fitness;
-};
+}
 
-module.exports = checkDataSet;
+module.exports = {
+    outputMatch,
+    inputMatchInt,
+    checkIntPoint,
+    checkIntSet,
+    inputMatchFloat,
+    checkFloatPoint,
+    checkFloatSet
+};

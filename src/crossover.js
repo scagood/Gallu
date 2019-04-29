@@ -1,34 +1,63 @@
-var belt = require('belt.js');
+const derange = require('./derange');
 
-var crossover = function (rabbits, crossover, shuffle) {
-    var kits = [];
-    var gore = [];
-    var a;
-    var b;
-    var c;
-    var d;
+function carve(rabbits, crossover) {
+    // Initialise the arrays for the parts of the cut rabbits to go into
+    const gore = new Array(crossover.length).fill([]);
 
-    // Check Inputs
-    // Check crossover and correct if possible
-    crossover = belt.compare.isArray(crossover) ? crossover : (isNaN(crossover) === false) ? [crossover] : null;
+    rabbits.forEach(rabbit => {
+        // Cut the rabbits partCount times
+        for (let count = 0; count < crossover.length; count++) {
+            let end = crossover[count + 1];
 
-    // Check parents are an array
-    if (crossover === null || !belt.compare.isArray(rabbits)) {
-        return false;
+            if (end === undefined) {
+                end = rabbit.length;
+            }
+
+            gore[count].push(
+                rabbit.slice(crossover[count], end)
+            );
+        }
+    });
+
+    return gore;
+}
+
+function arrange(gores, ignore, shuffle) {
+    return gores.map((gore, index) => {
+        if (index === ignore) {
+            return gore;
+        }
+
+        let keys = Object.keys(gore);
+            keys = shuffle(keys);
+
+        return keys.map(index => gore[index]);
+    });
+}
+
+function stitch(gores) {
+    return gores.map(gore => {
+        const kit = [];
+        gore.forEach(bits => kit.push(...bits));
+        return kit;
+    });
+}
+
+function crossover(rabbits, crossover, shuffle = derange) {
+    // If rabbits are not rabbits.
+    if (!Array.isArray(rabbits) || rabbits.every(Array.isArray)) {
+        const error = new Error('Invalid rabbits');
+        error.crossover = crossover;
+
+        throw error;
     }
 
     // If crossover points are not numbers end.
-    for (a in crossover) {
-        if ({}.hasOwnProperty.call(crossover, a) && isNaN(crossover[a])) {
-            return false;
-        }
-    }
+    if (!Array.isArray(crossover) || crossover.every(input => typeof input === 'number')) {
+        const error = new Error('Invalid crossover');
+        error.crossover = crossover;
 
-    // If rabbits are not rabbits.
-    for (a in rabbits) {
-        if ({}.hasOwnProperty.call(rabbits, a) && !belt.compare.isArray(rabbits[a])) {
-            return false;
-        }
+        throw error;
     }
 
     // Add 0 to crossover points
@@ -36,66 +65,26 @@ var crossover = function (rabbits, crossover, shuffle) {
         crossover.unshift(0);
     }
 
-    // Initialise the number of parts to cut the rabbits into
-    a = crossover.length;
-    while (a--) {
-        gore.push([]);
-    }
-
-    // Determin how shuffle the rabbit parts around
-    shuffle = belt.compare.isDefined(shuffle) ? shuffle : belt.shuffle.derange;
-
     // Cut the rabbits into pieces
-    for (a in rabbits) {
-        if ({}.hasOwnProperty.call(rabbits, a)) {
-            // Cut the rabbits partCount times
-            for (b = 0; b < crossover.length; b++) {
-                gore[b][a] = rabbits[a].slice(crossover[b], belt.compare.isDefined(crossover[b + 1]) ? crossover[b + 1] : rabbits[a].length);
-            }
+    let gore = carve(rabbits, crossover);
 
-            // Initialise the kits array
-            kits[a] = [];
-        }
-    }
 
-    // Part to not shuffle
-    b = belt.generator.randomInt(gore.length - 1, 0);
-    // Array IDs are strings.
-    b = b.toString();
-
-    // Shuffle the correct parts
-    for (a in gore) {
-        if ({}.hasOwnProperty.call(gore, a) && a !== b) {
-            // Convert array to shuffle into keys.
-            d = true;
-            c = Object.keys(gore[a]);
-
-            c = shuffle(c);
-
-            // Convert keys to array
-            for (d = 0; d < c.length; d++) {
-                c[d] = gore[a][c[d]];
-            }
-
-            gore[a] = c;
-        }
-    }
+    // Re-arrange the bits
+    const bits = arrange(
+        gore,
+        // Part to not shuffle
+        Math.floor(random() * gore.length),
+        shuffle
+    );
 
     // Sow the heads and tails to gether
-    for (a in gore) {
-        if ({}.hasOwnProperty.call(gore, a)) {
-            for (b in gore[a]) {
-                if ({}.hasOwnProperty.call(gore[a], b)) {
-                    kits[b] = kits[b].concat(gore[a][b]);
-                }
-            }
-        }
-    }
-
-    // Clear memory
-    gore = [];
+    const kits = stitch(gore);
 
     return kits;
 };
 
 module.exports = crossover;
+
+module.exports.carve = carve;
+module.exports.arrange = arrange;
+module.exports.stitch = stitch;
