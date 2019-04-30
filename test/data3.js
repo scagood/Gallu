@@ -1,43 +1,43 @@
-var fs = require('fs');
-var GA = require('../');
+const fs = require('fs');
+const GA = require('..');
 
-var In = {
+const In = {
     type: 'float',
     group: 'input'
 };
-var Out = {
+const Out = {
     type: 'int',
     group: 'output'
 };
 
 // Import the training dataset
-var dataFull = fs.readFileSync('data/data3.txt').toString();
+let dataFull = fs.readFileSync('data/data3.txt').toString();
 dataFull = GA.parse(dataFull, '([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) ([0-9.]{8}) (0|1)', [In, In, In, In, In, In, Out]);
 
 // Import the full dataset
-var data = dataFull.slice(0, 1000);
+const data = dataFull.slice(0, 1000);
 
 // GA's core variables
-var inputLength = 6;
-var outputLength = 1;
-var initaialRules = 6;
-var poolSize = 100;
-var geneCount = initaialRules * ((2 * inputLength) + outputLength);
+const inputLength = 6;
+const outputLength = 1;
+const initaialRules = 6;
+const poolSize = 100;
+const geneCount = initaialRules * ((2 * inputLength) + outputLength);
 
-var i = 1;
-var carry;
-var temp;
+let i = 1;
+let carry;
+let temp;
 
 // The fitness function
-var fitness = function (rules) {
+const fitness = function (rules) {
     return GA.check(data, GA.build(rules.slice(0), inputLength, outputLength, true), '#', true);
 };
 
 // Setup the GA
-var ga = new GA.GA(poolSize, geneCount);
+const ga = new GA.GA(poolSize, geneCount);
 
 // The precision function
-ga.setDP(function (geneId) {
+ga.setDP(geneId => {
     return geneId % ((2 * inputLength) + outputLength) >= (2 * inputLength) ? 0 : 6;
 });
 

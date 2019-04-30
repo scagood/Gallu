@@ -1,7 +1,7 @@
-var GA = require('./ga');
-var build = require('./build');
-var check = require('./check');
-var parse = require('./parse');
+const GA = require('./ga');
+const build = require('./build');
+const check = require('./check');
+const parse = require('./parse');
 
 module.exports = {
     GA,

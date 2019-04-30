@@ -29,7 +29,7 @@ function arrange(gores, ignore, shuffle) {
         }
 
         let keys = Object.keys(gore);
-            keys = shuffle(keys);
+        keys = shuffle(keys);
 
         return keys.map(index => gore[index]);
     });
@@ -43,7 +43,12 @@ function stitch(gores) {
     });
 }
 
-function crossover(rabbits, crossover, shuffle = derange) {
+function crossover(
+    rabbits,
+    crossover,
+    shuffle = derange,
+    random = Math.random
+) {
     // If rabbits are not rabbits.
     if (!Array.isArray(rabbits) || rabbits.every(Array.isArray)) {
         const error = new Error('Invalid rabbits');
@@ -66,8 +71,7 @@ function crossover(rabbits, crossover, shuffle = derange) {
     }
 
     // Cut the rabbits into pieces
-    let gore = carve(rabbits, crossover);
-
+    const gore = carve(rabbits, crossover);
 
     // Re-arrange the bits
     const bits = arrange(
@@ -78,10 +82,10 @@ function crossover(rabbits, crossover, shuffle = derange) {
     );
 
     // Sow the heads and tails to gether
-    const kits = stitch(gore);
+    const kits = stitch(bits);
 
     return kits;
-};
+}
 
 module.exports = crossover;
 

@@ -19,6 +19,7 @@ function inputMatchInt(data, rule, wildcard = defaultCard) {
 
     return true;
 }
+
 function checkIntPoint(data, rules, wildcard = defaultCard) {
     // Check current against rules
     for (let a = 0; a < rules.length; a++) {
@@ -29,6 +30,7 @@ function checkIntPoint(data, rules, wildcard = defaultCard) {
 
     return 0;
 }
+
 function checkIntSet(data, rules, wildcard = defaultCard) {
     let fitness = 0;
 
@@ -52,6 +54,7 @@ function inputMatchFloat(data, rule, wildcard = defaultCard) {
 
     return true;
 }
+
 function checkFloatPoint(data, rules, wildcard = defaultCard) {
     // Check current against rules
     for (let a = 0; a < rules.length; a++) {
@@ -62,6 +65,7 @@ function checkFloatPoint(data, rules, wildcard = defaultCard) {
 
     return 0;
 }
+
 function checkFloatSet(data, rules, wildcard = defaultCard) {
     let fitness = 0;
 

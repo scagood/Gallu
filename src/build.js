@@ -1,6 +1,6 @@
 function buildInts(input, inputLength, outputLength) {
     const rules = [];
-    const input = array.slice(0);
+    const array = input.slice(0);
 
     while (array.length > 0) {
         const next = array.splice(0, inputLength + outputLength);
@@ -50,10 +50,8 @@ function buildFloats(array, inputLength, outputLength) {
 
         return rule;
     });
-};
-
-
+}
 
 module.exports = buildInts;
-module.exports.buildInts = buildInts
+module.exports.buildInts = buildInts;
 module.exports.buildFloats = buildFloats;

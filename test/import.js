@@ -1,14 +1,14 @@
-var fs = require('fs');
-var GA = require('../');
+const fs = require('fs');
+const GA = require('..');
 
-var parse = GA.parse;
+const {parse} = GA;
 
-var data;
-var In = {
+let data;
+const In = {
     type: 'float',
     group: 'input'
 };
-var Out = {
+const Out = {
     type: 'int',
     group: 'output'
 };

@@ -1,18 +1,23 @@
-var belt = require('belt.js');
-var crossover = require('./crossover');
+const belt = require('belt.js');
+const crossover = require('./crossover');
+const derange = require('./derange');
 
 // This is the data structure that will be used for each gene sequence
-var Person = function (seed, bounds) {
-    var a = 0;
+const Person = function (seed, bounds) {
+    let a = 0;
 
     this.data = [];
     this.fitness = 0;
 
     // Check to see if this entry is seeded
-    if (belt.compare.isArray(seed)) {
+    if (Array.isArray(seed)) {
         // There is a seed so use it.
         this.data = seed;
-    } else if (isNaN(seed) === false) {
+
+        return this;
+    }
+
+    if (isNaN(seed) === false) {
         // Go through the gene length
         while (a < seed) {
             // Generate a random number (between the given bounds) and round it correctly to precision
@@ -20,37 +25,38 @@ var Person = function (seed, bounds) {
             this.data[a] = belt.maths.roundDP(this.data[a], bounds.getDP(a));
             a++;
         }
-    } else {
-        console.log(arguments);
-        throw new Error('Unknown Input');
+
+        return this;
     }
+
+    throw new Error('Unknown Input');
 };
 
 // The GA 'class'
-var GA = function (poolSize, geneLength, seeds) {
-    var population = [];
-    var k = 0;
+const GA = function (poolSize, geneLength, seeds = []) {
+    let population = [];
+    let k = 0;
 
     // The default 'bounds' functions
-    var bounds = {
-        getMin: function () {
+    const bounds = {
+        getMin() {
             return 0;
         },
-        getMax: function () {
+        getMax() {
             return 1;
         },
-        getDP: function () {
+        getDP() {
             return 0;
         },
-        getCanWildcard: function () {
+        getCanWildcard() {
             return 0;
         }
     };
 
     // Evaluate
     this.evaluate = function (callback) {
-        var a = 0;
-        var total = 0;
+        let a = 0;
+        let total = 0;
         // For every person
         while (a < population.length) {
             // Test their fitness (callback is the test function)
@@ -64,27 +70,27 @@ var GA = function (poolSize, geneLength, seeds) {
     };
 
     // Crossover
-    this.crossover = function (crossoverProb, maxNum, minNum, shuffleFunc) {
+    this.crossover = function (
+        {
+            prob = 0.8,
+            low = 0.6,
+            high = 0.9,
+            count = 1,
+            ruleLength = 1
+        } = {},
+        maxNum = 2,
+        minNum = 2,
+        shuffle = derange,
+    ) {
         // Preserve the old population till overwrite
-        var oldPopulation = population.slice(0);
-        var newPopulation = [];
-        var crossoverPoint;
+        const oldPopulation = population.slice(0);
+        let newPopulation = [];
+        let crossoverPoint;
 
-        var geneCount = oldPopulation.length;
-        var a;
-        var numberToCrossover;
-        var genes = [];
-
-        // Ensure all inputs are filled if not provided
-        crossoverProb = belt.compare.isDefined(crossoverProb) ? crossoverProb : {};
-        minNum = belt.compare.isDefined(minNum) ? minNum : 2;
-        maxNum = belt.compare.isDefined(maxNum) ? maxNum : 2;
-
-        crossoverProb.prob = belt.compare.isDefined(crossoverProb.prob) ? crossoverProb.prob : 0.8;
-        crossoverProb.ruleLength = belt.compare.isDefined(crossoverProb.ruleLength) ? crossoverProb.ruleLength : 1;
-        crossoverProb.low = belt.compare.isDefined(crossoverProb.low) ? crossoverProb.low : 0.6;
-        crossoverProb.high = belt.compare.isDefined(crossoverProb.high) ? crossoverProb.high : 0.9;
-        crossoverProb.count = belt.compare.isDefined(crossoverProb.count) ? crossoverProb.count : 1;
+        let geneCount = oldPopulation.length;
+        let a;
+        let numberToCrossover;
+        let genes = [];
 
         // For all the population
         while (geneCount > 0) {
@@ -109,16 +115,16 @@ var GA = function (poolSize, geneLength, seeds) {
 
             crossoverPoint = [];
             // Generate the crossover points
-            for (a = 0; a < crossoverProb.count; a++) {
+            for (a = 0; a < count; a++) {
                 crossoverPoint[a] = Math.random();
-                crossoverPoint[a] = belt.maths.probMap(crossoverPoint[a], crossoverProb.low, crossoverProb.high, crossoverProb.prob);
-                crossoverPoint[a] *= belt.compare.maxLen(genes) / crossoverProb.ruleLength;
+                crossoverPoint[a] = belt.maths.probMap(crossoverPoint[a], low, high, prob);
+                crossoverPoint[a] *= Math.max(...genes) / ruleLength;
                 crossoverPoint[a] = Math.round(crossoverPoint[a]);
-                crossoverPoint[a] *= crossoverProb.ruleLength;
+                crossoverPoint[a] *= ruleLength;
             }
 
             // Do the crossover
-            genes = crossover(genes, crossoverPoint, shuffleFunc);
+            genes = crossover(genes, crossoverPoint, shuffle);
 
             // Add the crossed over people to the new population
             newPopulation = newPopulation.concat(genes);
@@ -134,23 +140,23 @@ var GA = function (poolSize, geneLength, seeds) {
     };
 
     // Mutation
-    this.mutate = function (prob, wildcard, wildprob, lenOfLenMutate, probOfLenMutate, lenMutateWeight) {
-        var a = 0;
-        var b;
-        var current;
-        var ruleGene;
-        var oldPopulation = population.slice(0);
-        var newPopulation = [];
-        var newRule = [];
+    this.mutate = function (
+        prob = 1 / geneLength,
+        wildcard = '#',
+        wildprob = 0,
+        lenOfLenMutate = 0,
+        probOfLenMutate = 1 / geneLength,
+        lenMutateWeight = 0.5
+    ) {
+        let a = 0;
+        let b;
+        let current;
+        let ruleGene;
+        const oldPopulation = population.slice(0);
+        const newPopulation = [];
+        let newRule = [];
 
-        // Ensure all inputs are filled if not provided
-        prob = belt.compare.isNumber(prob) ? prob : (1 / geneLength);
-        wildcard = belt.compare.isDefined(wildcard) ? wildcard : '#';
-        wildprob = belt.compare.isNumber(wildprob) ? wildprob : 0;
-        lenOfLenMutate = belt.compare.isNumber(lenOfLenMutate) ? lenOfLenMutate : 0;
         lenOfLenMutate = Math.abs(lenOfLenMutate);
-        probOfLenMutate = belt.compare.isNumber(probOfLenMutate) ? probOfLenMutate : (1 / geneLength);
-        lenMutateWeight = belt.compare.isNumber(lenMutateWeight) ? lenMutateWeight : 0.5;
 
         // For every person
         while (a < population.length) {
@@ -174,8 +180,13 @@ var GA = function (poolSize, geneLength, seeds) {
                         newRule[b] = ruleGene;
                         b++;
                     }
+
                     // Add the rule into the current person, ensuring the data structure isn't broken
-                    current.splice.apply(current, [belt.generator.randomInt(0, current.length / lenOfLenMutate) * lenOfLenMutate, 0].concat(newRule));
+                    current.splice(
+                        belt.generator.randomInt(0, current.length / lenOfLenMutate) * lenOfLenMutate,
+                        0,
+                        ...newRule
+                    );
                 } else if (lenOfLenMutate !== 0) {
                     // Subtractive
                     // Remove a rule from the current person, ensuring the data structure isn't broken
@@ -199,26 +210,27 @@ var GA = function (poolSize, geneLength, seeds) {
                         current[b] = belt.maths.roundDP(current[b], bounds.getDP(b));
                     }
                 }
+
                 b++;
             }
+
             // Add the mutated person to the new population
             newPopulation.push(new Person(current));
             a++;
         }
+
         // Overwrite the old population with the new population
         population = newPopulation;
     };
 
     // Selection
-    this.select = function (size) {
-        var newPopulation = [];
-        var people;
-        var current;
-        var best;
-        var a;
-        var b = population.length;
-
-        size = belt.compare.isDefined(size) ? size : 2;
+    this.select = function (size = 2) {
+        const newPopulation = [];
+        let people;
+        let current;
+        let best;
+        let a;
+        let b = population.length;
 
         // For every gene
         while (b--) {
@@ -263,8 +275,8 @@ var GA = function (poolSize, geneLength, seeds) {
     };
 
     this.getBest = function () {
-        var s = population[0];
-        var a;
+        let s = population[0];
+        let a;
 
         // Find all the 'fitest' people and select them
         for (a = 0; a < population.length; a++) {
@@ -283,10 +295,11 @@ var GA = function (poolSize, geneLength, seeds) {
         // Return the best person.
         return s;
     };
+
     this.getWorst = function (c) {
-        var s = population[0];
-        var t = 0;
-        var a = 0;
+        let s = population[0];
+        let t = 0;
+        let a = 0;
 
         // Find the least 'fit' person
         while (a < population.length) {
@@ -294,8 +307,10 @@ var GA = function (poolSize, geneLength, seeds) {
                 s = population[a];
                 t = a;
             }
+
             a++;
         }
+
         return c ? t : s;
     };
 
@@ -305,28 +320,31 @@ var GA = function (poolSize, geneLength, seeds) {
     };
 
     this.getTotalFitness = function () {
-        var s = 0;
-        var a = 0;
+        let s = 0;
+        let a = 0;
         // Add all the fitnesses together.
         while (a < population.length) {
             s += population[a].fitness;
             a++;
         }
+
         return s;
     };
+
     this.getAverageFitness = function () {
         // Divide the total fitness by the number of people.
         return this.getTotalFitness() / poolSize;
     };
 
     this.getAverageLength = function () {
-        var s = 0;
-        var a = 0;
+        let s = 0;
+        let a = 0;
         // Add all the lengths together
         while (a < population.length) {
             s += population[a].data.length;
             a++;
         }
+
         // Divide by the number of people.
         return s / population.length;
     };
@@ -338,30 +356,33 @@ var GA = function (poolSize, geneLength, seeds) {
 
     // Default set bound functions
     this.setMin = function (min) {
-        if (belt.compare.isNumber(min)) {
-            bounds.getMin = function () {
-                return min;
-            };
-        } else if (belt.compare.isFunction(min)) {
+        if (typeof min === 'number') {
+            bounds.getMin = () => min;
+            return this;
+        }
+
+        if (typeof min === 'function') {
             bounds.getMin = min;
-        } else {
-            bounds.getMin = function () {
-                return 0;
-            };
+            return this;
         }
+
+        bounds.getMin = () => 0;
+        return this;
     };
+
     this.setMax = function (max) {
-        if (belt.compare.isNumber(max)) {
-            bounds.getMax = function () {
-                return max;
-            };
-        } else if (belt.compare.isFunction(max)) {
-            bounds.getMax = max;
-        } else {
-            bounds.getMax = function () {
-                return 1;
-            };
+        if (typeof max === 'number') {
+            bounds.getMax = () => max;
+            return this;
         }
+
+        if (typeof max === 'function') {
+            bounds.getMax = max;
+            return this;
+        }
+
+        bounds.getMax = () => 0;
+        return this;
     };
 
     this.setDP = function (precision) {
@@ -377,23 +398,24 @@ var GA = function (poolSize, geneLength, seeds) {
             };
         }
     };
+
     this.setCanWildcard = function (canWildcard) {
-        if (belt.compare.isNumber(canWildcard)) {
-            bounds.getCanWildcard = function () {
-                return canWildcard;
-            };
-        } else if (belt.compare.isFunction(canWildcard)) {
-            bounds.getCanWildcard = canWildcard;
-        } else {
-            bounds.getCanWildcard = function () {
-                return 0;
-            };
+        if (typeof canWildcard === 'number') {
+            bounds.getCanWildcard = () => canWildcard;
+            return this;
         }
+
+        if (typeof canWildcard === 'function') {
+            bounds.getCanWildcard = canWildcard;
+            return this;
+        }
+
+        bounds.getCanWildcard = () => 0;
+        return this;
     };
 
     this.init = function () {
         // Set seeds to empty if non are given
-        seeds = belt.compare.isDefined(seeds) ? seeds : [];
         if (poolSize >= seeds.length) {
             // For every seed
             while (k < seeds.length) {
@@ -401,6 +423,7 @@ var GA = function (poolSize, geneLength, seeds) {
                 population[k] = new Person(seeds[k], bounds);
                 k++;
             }
+
             // For the unseeded population
             while (k < poolSize) {
                 // Create the rest of the unseeded people

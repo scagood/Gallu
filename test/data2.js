@@ -1,39 +1,39 @@
-var fs = require('fs');
-var GA = require('../');
+const fs = require('fs');
+const GA = require('..');
 
-var In = {
+const In = {
     type: 'float',
     group: 'input'
 };
-var Out = {
+const Out = {
     type: 'int',
     group: 'output'
 };
 
 // Import the dataset
-var data = fs.readFileSync('data/data2.txt').toString();
+let data = fs.readFileSync('data/data2.txt').toString();
 data = GA.parse(data, '(0|1)(0|1)(0|1)(0|1)(0|1)(0|1) (0|1)', [In, In, In, In, In, In, Out]);
 
 // Core GA variables
-var inputLength = 6;
-var outputLength = 1;
-var initaialRules = 10;
-var poolSize = 100;
-var geneCount = initaialRules * (inputLength + outputLength);
+const inputLength = 6;
+const outputLength = 1;
+const initaialRules = 10;
+const poolSize = 100;
+const geneCount = initaialRules * (inputLength + outputLength);
 
-var i = 1;
-var carry;
+let i = 1;
+let carry;
 
 // The fitness function
-var fitness = function (rules) {
+const fitness = function (rules) {
     return GA.check(data, GA.build(rules.slice(0), inputLength, outputLength));
 };
 
 // Setup the GA
-var ga = new GA.GA(poolSize, geneCount);
+const ga = new GA.GA(poolSize, geneCount);
 
 // Change the built in can wildcard function
-ga.setCanWildcard(function (geneId) {
+ga.setCanWildcard(geneId => {
     return geneId % (inputLength + outputLength) >= inputLength ? 0 : 1;
 });
 

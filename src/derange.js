@@ -20,14 +20,14 @@ function derange(input, random = Math.random) {
     const array = input.slice();
     const mark = array.map(() => false);
 
-    let tailMark = array.length - 1
+    let tailMark = array.length - 1;
     for (let count = array.length - 1; tailMark > 0; count--) {
         if (mark[count]) {
             continue;
         }
 
         // Find unmarked
-        let unmarked = mark
+        const unmarked = mark
             .map(markMap)
             .filter(j => !mark[j] && j < count);
 
@@ -37,16 +37,18 @@ function derange(input, random = Math.random) {
         // Swap the entries
         [array[count], array[j]] = [array[j], array[count]];
 
-        // this introduces the unbiased random characteristic
+        // This introduces the unbiased random characteristic
         if (random() < tailMark * derangeNum(tailMark - 1) / derangeNum(tailMark + 1)) {
             // Randomly decide to mark the entry
             mark[j] = true;
             tailMark--;
         }
+
         tailMark--;
     }
+
     return array;
-};
+}
 
 module.exports = derange;
 module.exports.markMap = markMap;

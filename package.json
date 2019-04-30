@@ -17,7 +17,9 @@
   },
   "xo": {
     "space": 4,
-    "ignore": [],
+    "ignore": [
+        "web"
+    ],
     "rules": {
       "max-params": [
         1,
