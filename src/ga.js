@@ -424,22 +424,20 @@ const GA = function (poolSize, geneLength, seeds = []) {
 
     this.init = function () {
         // Set seeds to empty if non are given
-        if (poolSize >= seeds.length) {
-            // For every seed
-            while (k < seeds.length) {
-                // Create a seeded person
-                population[k] = new Person(seeds[k], bounds);
-                k++;
-            }
-
-            // For the unseeded population
-            while (k < poolSize) {
-                // Create the rest of the unseeded people
-                population[k] = new Person(geneLength, bounds);
-                k++;
-            }
-        } else {
+        if (poolSize < seeds.length) {
             throw new Error('Too many seeds for the pool size.');
+        }
+
+        // For every seed
+        while (k < seeds.length) {
+            // Create a seeded person
+            population[k++] = new Person(seeds[k], bounds);
+        }
+
+        // For the unseeded population
+        while (k < poolSize) {
+            // Create the rest of the unseeded people
+            population[k++] = new Person(geneLength, bounds);
         }
     };
 };
