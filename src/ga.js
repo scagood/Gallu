@@ -5,26 +5,33 @@ const Person = require('./person');
 function map(old, fMin, fMax, tMin, tMax) {
     // Catch divied by zero
     if (fMax - fMin === 0) {
-        // If the range is 0 to 0 the the answer is always 0
         return 0;
     }
 
-    return ((old - fMin) * (tMax - tMin) / (fMax - fMin)) + tMin;
+    return tMin + (
+        (old - fMin) *
+        (tMax - tMin) /
+        (fMax - fMin)
+    );
 }
 
 function probMap(old, low = 0, high = 1, prob = 1) {
-    let res;
-    if (old >= 0 && old <= (0.5 - (prob / 2))) {
-        res = map(old, 0, (0.5 - (prob / 2)), 0, low);
-    } else if (old >= (0.5 - (prob / 2)) && old <= (0.5 + (prob / 2))) {
-        res = map(old, (0.5 - (prob / 2)), (0.5 + (prob / 2)), low, high);
-    } else if (old >= (0.5 + (prob / 2)) && old <= 1) {
-        res = map(old, (0.5 + (prob / 2)), 1, high, 1);
-    } else {
-        res = false;
+    const pos = 0.5 + (prob / 2);
+    const neg = 0.5 - (prob / 2);
+
+    if (old >= neg && old <= pos) {
+        return map(old, neg, pos, low, high);
     }
 
-    return res;
+    if (old >= 0 && old <= neg) {
+        return map(old, 0, neg, 0, low);
+    }
+
+    if (old >= pos && old <= 1) {
+        return map(old, pos, 1, high, 1);
+    }
+
+    return false;
 }
 
 // The GA 'class'
