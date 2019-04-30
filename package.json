@@ -32,7 +32,5 @@
     "url": "https://github.com/scagood/gallu/issues"
   },
   "homepage": "https://github.com/scagood/gallu#readme",
-  "dependencies": {
-    "belt.js": "0.3.1"
-  }
+  "dependencies": {}
 }

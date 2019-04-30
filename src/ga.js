@@ -1,36 +1,31 @@
-const belt = require('belt.js');
 const crossover = require('./crossover');
 const derange = require('./derange');
+const Person = require('./person');
 
-// This is the data structure that will be used for each gene sequence
-const Person = function (seed, bounds) {
-    let a = 0;
-
-    this.data = [];
-    this.fitness = 0;
-
-    // Check to see if this entry is seeded
-    if (Array.isArray(seed)) {
-        // There is a seed so use it.
-        this.data = seed;
-
-        return this;
+function map(old, fMin, fMax, tMin, tMax) {
+    // Catch divied by zero
+    if (fMax - fMin === 0) {
+        // If the range is 0 to 0 the the answer is always 0
+        return 0;
     }
 
-    if (isNaN(seed) === false) {
-        // Go through the gene length
-        while (a < seed) {
-            // Generate a random number (between the given bounds) and round it correctly to precision
-            this.data[a] = belt.generator.random(bounds.getMin(a), bounds.getMax(a));
-            this.data[a] = belt.maths.roundDP(this.data[a], bounds.getDP(a));
-            a++;
-        }
+    return ((old - fMin) * (tMax - tMin) / (fMax - fMin)) + tMin;
+}
 
-        return this;
+function probMap(old, low = 0, high = 1, prob = 1) {
+    let res;
+    if (old >= 0 && old <= (0.5 - (prob / 2))) {
+        res = map(old, 0, (0.5 - (prob / 2)), 0, low);
+    } else if (old >= (0.5 - (prob / 2)) && old <= (0.5 + (prob / 2))) {
+        res = map(old, (0.5 - (prob / 2)), (0.5 + (prob / 2)), low, high);
+    } else if (old >= (0.5 + (prob / 2)) && old <= 1) {
+        res = map(old, (0.5 + (prob / 2)), 1, high, 1);
+    } else {
+        res = false;
     }
 
-    throw new Error('Unknown Input');
-};
+    return res;
+}
 
 // The GA 'class'
 const GA = function (poolSize, geneLength, seeds = []) {
@@ -95,7 +90,7 @@ const GA = function (poolSize, geneLength, seeds = []) {
         // For all the population
         while (geneCount > 0) {
             // How many should be crossed over
-            numberToCrossover = belt.generator.randomInt(maxNum, minNum);
+            numberToCrossover = Math.floor(Math.random() * (maxNum - minNum + 1)) + minNum;
 
             // Clear previous crossover pool
             genes = [];
@@ -107,8 +102,10 @@ const GA = function (poolSize, geneLength, seeds = []) {
 
             for (a = 0; a < numberToCrossover; a++) {
                 // Remove a gene from the old population and add it to the crossover pool
-                crossoverPoint = belt.generator.randomInt(oldPopulation.length - 1, 0);
-                crossoverPoint = oldPopulation.splice(crossoverPoint, 1)[0];
+                crossoverPoint = oldPopulation.splice(
+                    Math.floor(Math.random() * oldPopulation.length),
+                    1
+                )[0];
                 genes.push(crossoverPoint.data);
                 geneCount--;
             }
@@ -117,7 +114,7 @@ const GA = function (poolSize, geneLength, seeds = []) {
             // Generate the crossover points
             for (a = 0; a < count; a++) {
                 crossoverPoint[a] = Math.random();
-                crossoverPoint[a] = belt.maths.probMap(crossoverPoint[a], low, high, prob);
+                crossoverPoint[a] = probMap(crossoverPoint[a], low, high, prob);
                 crossoverPoint[a] *= Math.max(...genes) / ruleLength;
                 crossoverPoint[a] = Math.round(crossoverPoint[a]);
                 crossoverPoint[a] *= ruleLength;
@@ -151,7 +148,6 @@ const GA = function (poolSize, geneLength, seeds = []) {
         let a = 0;
         let b;
         let current;
-        let ruleGene;
         const oldPopulation = population.slice(0);
         const newPopulation = [];
         let newRule = [];
@@ -174,23 +170,25 @@ const GA = function (poolSize, geneLength, seeds = []) {
                     // Generate the new rule.
                     while (b < lenOfLenMutate) {
                         // Generate a random number (between the given bounds) and round it correctly to precision
-                        ruleGene = belt.generator.random(bounds.getMin(b + current.length), bounds.getMax(b + current.length));
-                        ruleGene = belt.maths.roundDP(ruleGene, bounds.getDP(b + current.length));
+                        const min = bounds.getMin(b + current.length);
+                        const max = bounds.getMax(b + current.length);
+                        const rand = min + (Math.random() * (max - min));
+                        const precision = 10 ** bounds.getDP(b + current.length);
 
-                        newRule[b] = ruleGene;
-                        b++;
+                        newRule[b++] = Math.round(rand * precision) / precision;
                     }
 
                     // Add the rule into the current person, ensuring the data structure isn't broken
                     current.splice(
-                        belt.generator.randomInt(0, current.length / lenOfLenMutate) * lenOfLenMutate,
+                        Math.floor(Math.random() * current.length / lenOfLenMutate) * lenOfLenMutate,
                         0,
                         ...newRule
                     );
                 } else if (lenOfLenMutate !== 0) {
                     // Subtractive
                     // Remove a rule from the current person, ensuring the data structure isn't broken
-                    current.splice(belt.generator.randomInt(0, current.length / lenOfLenMutate) * lenOfLenMutate, lenOfLenMutate);
+                    const random = Math.floor(Math.random() * ((current.length / lenOfLenMutate) + 1));
+                    current.splice(random * lenOfLenMutate, lenOfLenMutate);
                 }
             }
 
@@ -204,10 +202,12 @@ const GA = function (poolSize, geneLength, seeds = []) {
                         // Go to wildcard
                         current[b] = wildcard;
                     } else {
-                        // Do the mutation
-                        current[b] = belt.generator.random(bounds.getMin(b), bounds.getMax(b));
-                        // Round to correct precision
-                        current[b] = belt.maths.roundDP(current[b], bounds.getDP(b));
+                        const min = bounds.getMin(b);
+                        const max = bounds.getMax(b);
+                        const rand = min + (Math.random() * (max - min));
+                        const precision = 10 ** bounds.getDP(b);
+
+                        current[b] = Math.round(rand * precision) / precision;
                     }
                 }
 
@@ -238,7 +238,7 @@ const GA = function (poolSize, geneLength, seeds = []) {
             people = [];
             while (a--) {
                 // Select 'size' random people from the population
-                people.push(population[belt.generator.randomInt(population.length - 1, 0)]);
+                people.push(population[Math.floor(Math.random() * population.length)]);
             }
 
             // Find the 'fitest' aka best person(s)
@@ -386,17 +386,18 @@ const GA = function (poolSize, geneLength, seeds = []) {
     };
 
     this.setDP = function (precision) {
-        if (belt.compare.isNumber(precision)) {
-            bounds.getDP = function () {
-                return precision;
-            };
-        } else if (belt.compare.isFunction(precision)) {
-            bounds.getDP = precision;
-        } else {
-            bounds.getDP = function () {
-                return 0;
-            };
+        if (typeof precision === 'number') {
+            bounds.getDP = () => precision;
+            return this;
         }
+
+        if (typeof precision === 'function') {
+            bounds.getDP = precision;
+            return this;
+        }
+
+        bounds.getDP = () => 0;
+        return this;
     };
 
     this.setCanWildcard = function (canWildcard) {
