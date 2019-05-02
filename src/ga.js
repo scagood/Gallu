@@ -1,6 +1,11 @@
 const crossover = require('./crossover');
 const derange = require('./derange');
 const Person = require('./person');
+const {
+    findDeep,
+    smallestBestReduce,
+    largestWorstReduce
+} = require('./reducers');
 
 function map(old, fMin, fMax, tMin, tMax) {
     // Catch divied by zero
@@ -36,8 +41,7 @@ function probMap(old, low = 0, high = 1, prob = 1) {
 
 // The GA 'class'
 const GA = function (poolSize, geneLength, seeds = []) {
-    let population = [];
-    let k = 0;
+    let population;
 
     // The default 'bounds' functions
     const bounds = {
@@ -152,78 +156,71 @@ const GA = function (poolSize, geneLength, seeds = []) {
         probOfLenMutate = 1 / geneLength,
         lenMutateWeight = 0.5
     ) {
-        let a = 0;
-        let b;
-        let current;
         const oldPopulation = population.slice(0);
         const newPopulation = [];
-        let newRule = [];
 
         lenOfLenMutate = Math.abs(lenOfLenMutate);
 
         // For every person
-        while (a < population.length) {
+        while (oldPopulation.length) {
             // Remove a person from the old population
-            current = oldPopulation.pop();
-            // Extract the data from them.
-            current = current.data;
+            let {data} = oldPopulation.pop();
 
             // Mutate Length
             if (probOfLenMutate > Math.random()) {
-                b = 0;
                 if (Math.random() < lenMutateWeight) {
                     // Additive
-                    newRule = [];
+                    const newRule = [];
                     // Generate the new rule.
+                    let b = 0;
                     while (b < lenOfLenMutate) {
                         // Generate a random number (between the given bounds) and round it correctly to precision
-                        const min = bounds.getMin(b + current.length);
-                        const max = bounds.getMax(b + current.length);
+                        const min = bounds.getMin(b + data.length);
+                        const max = bounds.getMax(b + data.length);
                         const rand = min + (Math.random() * (max - min));
-                        const precision = 10 ** bounds.getDP(b + current.length);
+                        const precision = 10 ** bounds.getDP(b + data.length);
 
                         newRule[b++] = Math.round(rand * precision) / precision;
                     }
 
                     // Add the rule into the current person, ensuring the data structure isn't broken
-                    current.splice(
-                        Math.floor(Math.random() * current.length / lenOfLenMutate) * lenOfLenMutate,
-                        0,
-                        ...newRule
-                    );
+                    const index = Math.floor(Math.random() * data.length / lenOfLenMutate) * lenOfLenMutate;
+                    data.splice(index, 0, ...newRule);
                 } else if (lenOfLenMutate !== 0) {
                     // Subtractive
                     // Remove a rule from the current person, ensuring the data structure isn't broken
-                    const random = Math.floor(Math.random() * ((current.length / lenOfLenMutate) + 1));
-                    current.splice(random * lenOfLenMutate, lenOfLenMutate);
+                    const random = Math.floor(Math.random() * ((data.length / lenOfLenMutate) + 1));
+                    data.splice(random * lenOfLenMutate, lenOfLenMutate);
                 }
             }
 
-            b = 0;
             // For each gene
-            while (b < current.length) {
+            data = data.map((gene, id) => {
                 // If this should be mutated
                 if (prob > Math.random()) {
                     // If mutate to wildcard
-                    if (current[b] !== wildcard && wildprob > Math.random() && bounds.getCanWildcard(b) === 1) {
+                    if (
+                        gene !== wildcard &&
+                        wildprob > Math.random() &&
+                        bounds.getCanWildcard(id) === 1
+                    ) {
                         // Go to wildcard
-                        current[b] = wildcard;
-                    } else {
-                        const min = bounds.getMin(b);
-                        const max = bounds.getMax(b);
-                        const rand = min + (Math.random() * (max - min));
-                        const precision = 10 ** bounds.getDP(b);
-
-                        current[b] = Math.round(rand * precision) / precision;
+                        return wildcard;
                     }
+
+                    const min = bounds.getMin(id);
+                    const max = bounds.getMax(id);
+                    const rand = min + (Math.random() * (max - min));
+                    const precision = 10 ** bounds.getDP(id);
+
+                    return Math.round(rand * precision) / precision;
                 }
 
-                b++;
-            }
+                return gene;
+            });
 
             // Add the mutated person to the new population
-            newPopulation.push(new Person(current));
-            a++;
+            newPopulation.push(new Person(data));
         }
 
         // Overwrite the old population with the new population
@@ -232,133 +229,60 @@ const GA = function (poolSize, geneLength, seeds = []) {
 
     // Selection
     this.select = function (size = 2) {
-        const newPopulation = [];
-        let people;
-        let current;
-        let best;
-        let a;
-        let b = population.length;
-
-        // For every gene
-        while (b--) {
-            a = size;
-            people = [];
+        population = population.map(() => {
+            const people = [];
+            let a = size;
             while (a--) {
                 // Select 'size' random people from the population
-                people.push(population[Math.floor(Math.random() * population.length)]);
+                const index = Math.floor(Math.random() * population.length);
+                people.push(population[index]);
             }
 
             // Find the 'fitest' aka best person(s)
-            best = people[0];
-            for (a = 0; a < people.length; a++) {
-                current = people[a];
-                if (current.fitness > best.fitness) {
-                    best = current;
-                }
-            }
-
-            // Find all the 'fitest' people and select them
-            for (a = 0; a < people.length; a++) {
-                if (best.fitness !== people[a].fitness) {
-                    people.splice(a, 1);
-                }
-            }
-
-            best = people[0];
-            // Find the smallest and 'fitest' person and select them
-            for (a = 0; a < people.length; a++) {
-                current = people[a];
-                if (current.data.length < best.data.length) {
-                    best = current;
-                }
-            }
-
-            // Add the best person to the new population
-            newPopulation.push(best);
-        }
-
-        // Overwrite the old population with the new one.
-        population = newPopulation;
+            return people.reduce(smallestBestReduce);
+        });
     };
 
     this.getBest = function () {
-        let s = population[0];
-        let a;
-
-        // Find all the 'fitest' people and select them
-        for (a = 0; a < population.length; a++) {
-            if (s.fitness < population[a].fitness) {
-                s = population[a];
-            }
-        }
-
-        // Find the smallest and 'fitest' person and select them
-        for (a = 0; a < population.length; a++) {
-            if (s.data.length > population[a].data.length && s.fitness === population[a].fitness) {
-                s = population[a];
-            }
-        }
-
-        // Return the best person.
-        return s;
+        return population.reduce(smallestBestReduce);
     };
 
-    this.getWorst = function (c) {
-        let s = population[0];
-        let t = 0;
-        let a = 0;
-
-        // Find the least 'fit' person
-        while (a < population.length) {
-            if (population[a].fitness < s.fitness) {
-                s = population[a];
-                t = a;
-            }
-
-            a++;
-        }
-
-        return c ? t : s;
+    this.getWorst = function () {
+        return population.reduce(largestWorstReduce);
     };
 
     this.setWorst = function (person) {
-        // Overwrite the lest 'fit' person with the previous 'fitest'
-        population[this.getWorst(true)] = person;
+        const index = population.findIndex(
+            findDeep(this.getWorst())
+        );
+        population[index] = person;
     };
 
     this.getTotalFitness = function () {
-        let s = 0;
-        let a = 0;
-        // Add all the fitnesses together.
-        while (a < population.length) {
-            s += population[a].fitness;
-            a++;
-        }
-
-        return s;
+        return population.reduce(
+            (carry, {fitness}) => carry + fitness,
+            0
+        );
     };
 
     this.getAverageFitness = function () {
-        // Divide the total fitness by the number of people.
-        return this.getTotalFitness() / poolSize;
+        return this.getTotalFitness() / population.length;
+    };
+
+    this.getTotalLength = function () {
+        return population.reduce(
+            (carry, {data: {length}}) => carry + length,
+            0
+        );
     };
 
     this.getAverageLength = function () {
-        let s = 0;
-        let a = 0;
-        // Add all the lengths together
-        while (a < population.length) {
-            s += population[a].data.length;
-            a++;
-        }
-
-        // Divide by the number of people.
-        return s / population.length;
+        return this.getTotalLength() / population.length;
     };
 
     this.getPopulation = function () {
         // Return an unassociated population
-        return population.slice(0);
+        return population;
     };
 
     // Default set bound functions
@@ -427,6 +351,9 @@ const GA = function (poolSize, geneLength, seeds = []) {
         if (poolSize < seeds.length) {
             throw new Error('Too many seeds for the pool size.');
         }
+
+        let k = 0;
+        population = [];
 
         // For every seed
         while (k < seeds.length) {
