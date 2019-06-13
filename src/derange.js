@@ -1,5 +1,5 @@
 const markMap = (_, i) => i;
-function derangeNum(number) {
+function derangeNumber(number) {
     if (number === 0) {
         return 1;
     }
@@ -13,8 +13,10 @@ function derangeNum(number) {
     return Math.floor(factorial / Math.E);
 }
 
-// Random Range Derangements are disscussed here
-// http://epubs.siam.org/doi/pdf/10.1137/1.9781611972986.7
+/*
+ * Random Range Derangements are disscussed here
+ * http://epubs.siam.org/doi/pdf/10.1137/1.9781611972986.7
+ */
 
 function derange(input, random = Math.random) {
     const array = input.slice();
@@ -38,7 +40,10 @@ function derange(input, random = Math.random) {
         [array[count], array[j]] = [array[j], array[count]];
 
         // This introduces the unbiased random characteristic
-        if (random() < tailMark * derangeNum(tailMark - 1) / derangeNum(tailMark + 1)) {
+        const derangePlus = derangeNumber(tailMark + 1);
+        const derangeMinus = derangeNumber(tailMark - 1);
+
+        if (random() < tailMark * derangeMinus / derangePlus) {
             // Randomly decide to mark the entry
             mark[j] = true;
             tailMark--;
@@ -51,5 +56,4 @@ function derange(input, random = Math.random) {
 }
 
 module.exports = derange;
-module.exports.markMap = markMap;
-module.exports.derangeNum = derangeNum;
+module.exports.derangeNumber = derangeNumber;

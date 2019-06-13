@@ -1,22 +1,23 @@
+/* eslint-disable max-lines, max-lines-per-function */
 const crossover = require('./crossover');
 const derange = require('./derange');
 const Person = require('./person');
 const {
     findDeep,
     smallestBestReduce,
-    largestWorstReduce
+    largestWorstReduce,
 } = require('./reducers');
 
-function map(old, fMin, fMax, tMin, tMax) {
+function map(old, source, target) {
     // Catch divied by zero
-    if (fMax - fMin === 0) {
+    if (source.max - source.min === 0) {
         return 0;
     }
 
-    return tMin + (
-        (old - fMin) *
-        (tMax - tMin) /
-        (fMax - fMin)
+    return target.min + (
+        (old - source.min) *
+        (target.max - target.min) /
+        (source.max - source.min)
     );
 }
 
@@ -25,22 +26,22 @@ function probMap(old, low = 0, high = 1, prob = 1) {
     const neg = 0.5 - (prob / 2);
 
     if (old >= neg && old <= pos) {
-        return map(old, neg, pos, low, high);
+        return map(old, {min: neg, max: pos}, {min: low, max: high});
     }
 
     if (old >= 0 && old <= neg) {
-        return map(old, 0, neg, 0, low);
+        return map(old, {min: 0, max: neg}, {min: 0, max: low});
     }
 
     if (old >= pos && old <= 1) {
-        return map(old, pos, 1, high, 1);
+        return map(old, {min: pos, max: 1}, {min: high, max: 1});
     }
 
     return false;
 }
 
 // The GA 'class'
-const GA = function (poolSize, geneLength, seeds = []) {
+function GA(poolSize, geneLength, seeds = []) {
     let population;
 
     // The default 'bounds' functions
@@ -56,17 +57,17 @@ const GA = function (poolSize, geneLength, seeds = []) {
         },
         getCanWildcard() {
             return 0;
-        }
+        },
     };
 
     // Evaluate
-    this.evaluate = function (callback) {
+    this.evaluate = function (calculate) {
         let a = 0;
         let total = 0;
         // For every person
         while (a < population.length) {
-            // Test their fitness (callback is the test function)
-            population[a].fitness = callback(population[a].data);
+            // Test their fitness
+            population[a].fitness = calculate(population[a].data);
             total += population[a].fitness;
             a++;
         }
@@ -82,10 +83,10 @@ const GA = function (poolSize, geneLength, seeds = []) {
             low = 0.6,
             high = 0.9,
             count = 1,
-            ruleLength = 1
+            ruleLength = 1,
         } = {},
-        maxNum = 2,
-        minNum = 2,
+        maxNumber = 2,
+        minNumber = 2,
         shuffle = derange,
     ) {
         // Preserve the old population till overwrite
@@ -101,22 +102,30 @@ const GA = function (poolSize, geneLength, seeds = []) {
         // For all the population
         while (geneCount > 0) {
             // How many should be crossed over
-            numberToCrossover = Math.floor(Math.random() * (maxNum - minNum + 1)) + minNum;
+            numberToCrossover = Math.floor(
+                Math.random() * (maxNumber - minNumber + 1)
+            ) + minNumber;
 
             // Clear previous crossover pool
             genes = [];
 
             // Prevent a single thing being not crossed over
-            if (geneCount - numberToCrossover < minNum && geneCount - numberToCrossover > 0) {
+            if (
+                geneCount - numberToCrossover < minNumber &&
+                geneCount - numberToCrossover > 0
+            ) {
                 numberToCrossover += geneCount - numberToCrossover;
             }
 
             for (a = 0; a < numberToCrossover; a++) {
-                // Remove a gene from the old population and add it to the crossover pool
-                crossoverPoint = oldPopulation.splice(
+                /*
+                 * Remove a gene from the old population
+                 * add it to the crossover pool
+                 */
+                [crossoverPoint] = oldPopulation.splice(
                     Math.floor(Math.random() * oldPopulation.length),
                     1
-                )[0];
+                );
                 genes.push(crossoverPoint.data);
                 geneCount--;
             }
@@ -150,16 +159,18 @@ const GA = function (poolSize, geneLength, seeds = []) {
     // Mutation
     this.mutate = function (
         prob = 1 / geneLength,
-        wildcard = '#',
-        wildprob = 0,
-        lenOfLenMutate = 0,
-        probOfLenMutate = 1 / geneLength,
-        lenMutateWeight = 0.5
+        {
+            wildcard = '#',
+            wildprob = 0,
+            lengthOfLengthMutate = 0,
+            probOfLengthMutate = 1 / geneLength,
+            lengthMutateWeight = 0.5,
+        }
     ) {
         const oldPopulation = population.slice(0);
         const newPopulation = [];
 
-        lenOfLenMutate = Math.abs(lenOfLenMutate);
+        lengthOfLengthMutate = Math.abs(lengthOfLengthMutate);
 
         // For every person
         while (oldPopulation.length) {
@@ -167,14 +178,17 @@ const GA = function (poolSize, geneLength, seeds = []) {
             let {data} = oldPopulation.pop();
 
             // Mutate Length
-            if (probOfLenMutate > Math.random()) {
-                if (Math.random() < lenMutateWeight) {
+            if (probOfLengthMutate > Math.random()) {
+                if (Math.random() < lengthMutateWeight) {
                     // Additive
                     const newRule = [];
                     // Generate the new rule.
                     let b = 0;
-                    while (b < lenOfLenMutate) {
-                        // Generate a random number (between the given bounds) and round it correctly to precision
+                    while (b < lengthOfLengthMutate) {
+                        /*
+                         * Generate a random number
+                         * round it correctly to precision
+                         */
                         const min = bounds.getMin(b + data.length);
                         const max = bounds.getMax(b + data.length);
                         const rand = min + (Math.random() * (max - min));
@@ -183,14 +197,24 @@ const GA = function (poolSize, geneLength, seeds = []) {
                         newRule[b++] = Math.round(rand * precision) / precision;
                     }
 
-                    // Add the rule into the current person, ensuring the data structure isn't broken
-                    const index = Math.floor(Math.random() * data.length / lenOfLenMutate) * lenOfLenMutate;
+                    /*
+                     * Add the rule into the current person
+                     * ensuring the data structure isn't broken
+                     */
+                    const index = Math.floor(
+                        Math.random() * data.length / lengthOfLengthMutate
+                    ) * lengthOfLengthMutate;
                     data.splice(index, 0, ...newRule);
-                } else if (lenOfLenMutate !== 0) {
-                    // Subtractive
-                    // Remove a rule from the current person, ensuring the data structure isn't broken
-                    const random = Math.floor(Math.random() * ((data.length / lenOfLenMutate) + 1));
-                    data.splice(random * lenOfLenMutate, lenOfLenMutate);
+                } else if (lengthOfLengthMutate !== 0) {
+                    /*
+                     * Subtractive
+                     * Remove a rule from the current person
+                     * ensuring the data structure isn't broken
+                     */
+                    const random = Math.floor(
+                        Math.random() * ((data.length / lengthOfLengthMutate) + 1)
+                    );
+                    data.splice(random * lengthOfLengthMutate, lengthOfLengthMutate);
                 }
             }
 

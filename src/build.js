@@ -17,7 +17,7 @@ function buildInts(input, inputLength, outputLength) {
 
         rules.push({
             input: next.splice(0, inputLength),
-            output: next.splice(0, outputLength)
+            output: next.splice(0, outputLength),
         });
     }
 
@@ -33,7 +33,7 @@ function buildFloats(array, inputLength, outputLength) {
         while (rule.input.length > 0) {
             const input = [
                 rule.input.shift(),
-                rule.input.shift()
+                rule.input.shift(),
             ];
 
             // Force input[0] to be less than input[1]

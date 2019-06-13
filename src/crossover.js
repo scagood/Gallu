@@ -1,7 +1,7 @@
 const derange = require('./derange');
 
 function carve(rabbits, crossover) {
-    // Initialise the arrays for the parts of the cut rabbits to go into
+    // The arrays for the parts of the cut rabbits to go into
     const gore = new Array(crossover.length).fill([]);
 
     rabbits.forEach(rabbit => {
@@ -9,7 +9,7 @@ function carve(rabbits, crossover) {
         for (let count = 0; count < crossover.length; count++) {
             let end = crossover[count + 1];
 
-            if (end === undefined) {
+            if (typeof end === 'undefined') {
                 end = rabbit.length;
             }
 

@@ -1,30 +1,25 @@
 function outputMatch(data, rule) {
-    for (let a = 0; a < data.length; a++) {
-        if (data[a] !== rule[a]) {
-            return 0;
-        }
-    }
-
-    return 1;
+    return Number(data.every(
+        (point, index) => point === rule[index]
+    ));
 }
 
 const defaultCard = '#';
 
 function inputMatchInt(data, rule, wildcard = defaultCard) {
-    for (let a = 0; a < data.length; a++) {
-        if (rule[a] !== wildcard && data[a] !== rule[a]) {
-            return false;
-        }
-    }
-
-    return true;
+    return data.every(
+        (point, index) => (
+            rule[index] === wildcard ||
+            point === rule[index]
+        )
+    );
 }
 
 function checkIntPoint(data, rules, wildcard = defaultCard) {
     // Check current against rules
-    for (let a = 0; a < rules.length; a++) {
-        if (inputMatchInt(data.input, rules[a].input, wildcard)) {
-            return outputMatch(data.output, rules[a].output);
+    for (const element of rules) {
+        if (inputMatchInt(data.input, element.input, wildcard)) {
+            return outputMatch(data.output, element.output);
         }
     }
 
@@ -32,20 +27,15 @@ function checkIntPoint(data, rules, wildcard = defaultCard) {
 }
 
 function checkIntSet(data, rules, wildcard = defaultCard) {
-    let fitness = 0;
-
-    // For every data point
-    for (let a = 0; a < data.length; a++) {
-        fitness += checkIntPoint(data[a], rules, wildcard);
-    }
-
-    return fitness;
+    return data.reduce(
+        (element, carry) => carry + checkIntPoint(element, rules, wildcard), 0
+    );
 }
 
 function inputMatchFloat(data, rule, wildcard = defaultCard) {
-    for (let a = 0; a < data.length; a++) {
+    for (const [a, element] of data.entries()) {
         if (
-            !(rule[a][0] < data[a] && data[a] < rule[a][1]) &&
+            !(rule[a][0] < element && element < rule[a][1]) &&
             !(rule[a][0] === wildcard || rule[a][1] === wildcard)
         ) {
             return false;
@@ -57,9 +47,9 @@ function inputMatchFloat(data, rule, wildcard = defaultCard) {
 
 function checkFloatPoint(data, rules, wildcard = defaultCard) {
     // Check current against rules
-    for (let a = 0; a < rules.length; a++) {
-        if (inputMatchFloat(data.input, rules[a].input, wildcard)) {
-            return outputMatch(data.output, rules[a].output);
+    for (const element of rules) {
+        if (inputMatchFloat(data.input, element.input, wildcard)) {
+            return outputMatch(data.output, element.output);
         }
     }
 
@@ -67,14 +57,9 @@ function checkFloatPoint(data, rules, wildcard = defaultCard) {
 }
 
 function checkFloatSet(data, rules, wildcard = defaultCard) {
-    let fitness = 0;
-
-    // For every data point
-    for (let a = 0; a < data.length; a++) {
-        fitness += checkFloatPoint(data[a], rules, wildcard);
-    }
-
-    return fitness;
+    return data.reduce(
+        (element, carry) => carry + checkFloatPoint(element, rules, wildcard), 0
+    );
 }
 
 module.exports = {
@@ -84,5 +69,5 @@ module.exports = {
     checkIntSet,
     inputMatchFloat,
     checkFloatPoint,
-    checkFloatSet
+    checkFloatSet,
 };

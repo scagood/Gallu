@@ -19,7 +19,10 @@ function Person(
     if (isNaN(seed) === false) {
         // Go through the gene length
         while (a < seed) {
-            // Generate a random number (between the given bounds) and round it correctly to precision
+            /*
+             * Generate a random number
+             * Round it correctly to precision
+             */
             const min = bounds.getMin(a);
             const max = bounds.getMax(a);
             const rand = min + (random() * (max - min));

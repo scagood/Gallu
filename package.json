@@ -4,7 +4,6 @@
   "description": "Yet another node genetic algorithm",
   "main": "src/index.js",
   "scripts": {
-    "test": "xo"
   },
   "repository": {
     "type": "git",
@@ -14,19 +13,6 @@
   "license": "MIT",
   "devDependencies": {
     "webpack": "^1.13.3"
-  },
-  "xo": {
-    "space": 4,
-    "ignore": [
-        "web"
-    ],
-    "rules": {
-      "max-params": [
-        1,
-        6
-      ],
-      "complexity": 0
-    }
   },
   "bugs": {
     "url": "https://github.com/scagood/gallu/issues"

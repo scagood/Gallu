@@ -7,6 +7,5 @@ module.exports = {
     GA,
     build,
     check,
-    parse
-
+    parse,
 };

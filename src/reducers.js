@@ -1,7 +1,7 @@
 const {AssertionError, deepEqual} = require('assert').strict;
 
 function worstReduce(carry, current) {
-    if (carry === undefined) {
+    if (typeof carry === 'undefined') {
         return current;
     }
 
@@ -13,7 +13,7 @@ function worstReduce(carry, current) {
 }
 
 function bestReduce(carry, current) {
-    if (carry === undefined) {
+    if (typeof carry === 'undefined') {
         return current;
     }
 
@@ -25,7 +25,7 @@ function bestReduce(carry, current) {
 }
 
 function largestWorstReduce(carry, current) {
-    if (carry === undefined) {
+    if (typeof carry === 'undefined') {
         return current;
     }
 
@@ -44,7 +44,7 @@ function largestWorstReduce(carry, current) {
 }
 
 function smallestBestReduce(carry, current) {
-    if (carry === undefined) {
+    if (typeof carry === 'undefined') {
         return current;
     }
 
@@ -82,5 +82,5 @@ module.exports = {
     bestReduce,
     largestWorstReduce,
     smallestBestReduce,
-    findDeep
+    findDeep,
 };
